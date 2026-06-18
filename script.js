@@ -1,272 +1,1509 @@
+const firebaseConfig = {
+    apiKey: "AIzaSyCjh8yCOUTAG85vRKdjx7w8umXyJJKgW74",
+    authDomain: "dinosaur-4884d.firebaseapp.com",
+    databaseURL: "https://dinosaur-4884d-default-rtdb.firebaseio.com",
+    projectId: "dinosaur-4884d",
+    storageBucket: "dinosaur-4884d.firebasestorage.app",
+    messagingSenderId: "683392133974",
+    appId: "1:683392133974:web:de779bc3b49920ffe3c4f7",
+    measurementId: "G-KGXHQ2ZKNV"
+};
+
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const boardElement = document.getElementById("board");
-const cells = document.querySelectorAll(".cell");
+const lobby = document.getElementById("lobby");
+const waitingScreen = document.getElementById("waitingScreen");
+const gameContainer = document.getElementById("gameContainer");
 
-const currentPlayerText =
-document.getElementById("currentPlayer");
+const playerNameInput = document.getElementById("playerName");
 
-const statusText =
-document.getElementById("status");
+const createRoomBtn = document.getElementById("createRoomBtn");
+const joinRoomBtn = document.getElementById("joinRoomBtn");
 
-const gameMode =
-document.getElementById("gameMode");
+const roomInput = document.getElementById("roomInput");
 
-const newGameBtn =
-document.getElementById("newGameBtn");
+const roomInfo = document.getElementById("roomInfo");
 
-const player3Row =
-document.getElementById("player3Row");
+const roomCodeDisplay =
+document.getElementById("roomCodeDisplay");
 
-let players = ["🖥️","⌨️"];
+const playerList =
+document.getElementById("playerList");
 
-const winPatterns = [
-[0,1,2],
-[3,4,5],
-[6,7,8],
-[0,3,6],
-[1,4,7],
-[2,5,8],
-[0,4,8],
-[2,4,6]
-];
+const readyBtn =
+document.getElementById("readyBtn");
 
-function createDefaultGame(){
+const shareBox =
+document.getElementById("shareBox");
 
-    const mode = parseInt(gameMode.value);
+const shareLink =
+document.getElementById("shareLink");
 
-    if(mode === 2){
-        players = ["🖥️","⌨️"];
-        player3Row.style.display = "none";
-    }else{
-        players = ["🖥️","⌨️","🖱️"];
-        player3Row.style.display = "";
-    }
+const copyLinkBtn =
+document.getElementById("copyLinkBtn");
 
-    db.ref("game").set({
-        board:["","","","","","","","",""],
-        currentPlayer:players[0],
-        winner:"",
-        mode:mode
-    });
-}
+const loading =
+document.getElementById("loading");
 
-function renderBoard(board){
+let selectedAnimal = "🐶";
 
-    cells.forEach((cell,index)=>{
-        cell.textContent = board[index];
-    });
+let roomId = null;
 
-}
+let playerId =
+"p_" + Math.random().toString(36).substring(2, 10);
 
-function nextPlayer(current){
+let playerName = "";
 
-    let index =
-    players.indexOf(current);
+let roomRef = null;
 
-    index++;
+let playerRef = null;
 
-    if(index >= players.length){
-        index = 0;
-    }
+/* ==========================================
+   Animal Select
+========================================== */
 
-    return players[index];
-}
+document
+.querySelectorAll(".animalBtn")
+.forEach(btn => {
 
-function boardFull(board){
+    btn.addEventListener("click", () => {
 
-    return board.every(v => v !== "");
+        document
+        .querySelectorAll(".animalBtn")
+        .forEach(b => b.classList.remove("selected"));
 
-}
+        btn.classList.add("selected");
 
-function checkWinner(board){
-
-    for(let pattern of winPatterns){
-
-        const a = board[pattern[0]];
-        const b = board[pattern[1]];
-        const c = board[pattern[2]];
-
-        if(a && a===b && b===c){
-            return a;
-        }
-
-    }
-
-    return null;
-}
-
-function updateScore(winner){
-
-    db.ref("score").once("value")
-    .then(snapshot=>{
-
-        let score =
-        snapshot.val() || {
-
-            p1:{win:0,lose:0},
-            p2:{win:0,lose:0},
-            p3:{win:0,lose:0}
-        };
-
-        if(winner==="🖥️"){
-            score.p1.win++;
-            score.p2.lose++;
-            score.p3.lose++;
-        }
-
-        if(winner==="⌨️"){
-            score.p2.win++;
-            score.p1.lose++;
-            score.p3.lose++;
-        }
-
-        if(winner==="🖱️"){
-            score.p3.win++;
-            score.p1.lose++;
-            score.p2.lose++;
-        }
-
-        db.ref("score").set(score);
+        selectedAnimal =
+        btn.dataset.animal;
 
     });
 
+});
+
+function generateRoomCode() {
+
+    const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ123456789";
+
+    let code = "";
+
+    for(let i = 0; i < 6; i++){
+
+        code += chars[
+            Math.floor(
+                Math.random() * chars.length
+            )
+        ];
+
+    }
+
+    return code;
+
 }
 
-cells.forEach(cell=>{
+function getPlayerName() {
 
-    cell.addEventListener("click",()=>{
+    const value =
+    playerNameInput.value.trim();
 
-        const index =
-        cell.dataset.index;
+    if(value.length < 2){
 
-        db.ref("game")
-        .once("value")
-        .then(snapshot=>{
+        alert("กรุณากรอกชื่อ");
 
-            const game =
-            snapshot.val();
+        return null;
+    }
 
-            if(!game) return;
+    return value;
 
-            let board =
-            game.board;
+}
 
-            if(board[index] !== "")
-                return;
+/* ==========================================
+   Create Room
+========================================== */
 
-            if(game.winner !== "")
-                return;
+createRoomBtn.addEventListener("click", () => {
 
-            board[index] =
-            game.currentPlayer;
+    playerName = getPlayerName();
 
-            const winner =
-            checkWinner(board);
+    if(!playerName) return;
 
-            if(winner){
+    roomId = generateRoomCode();
 
-                updateScore(winner);
+    roomRef =
+    db.ref("rooms/" + roomId);
 
-                db.ref("game").update({
-                    board:board,
-                    winner:winner
-                });
+    roomRef.set({
+
+        createdAt: Date.now(),
+
+        status: "waiting",
+
+        host: playerId,
+
+        countdown: 0
+
+    });
+
+    joinRoom(roomId);
+
+});
+
+/* ==========================================
+   Join Room Button
+========================================== */
+
+joinRoomBtn.addEventListener("click", () => {
+
+    playerName = getPlayerName();
+
+    if(!playerName) return;
+
+    const code =
+    roomInput.value
+    .trim()
+    .toUpperCase();
+
+    if(code === ""){
+
+        alert("กรุณากรอก Room");
+
+        return;
+    }
+
+    joinRoom(code);
+
+});
+
+/* ==========================================
+   Join Room Function
+========================================== */
+
+function joinRoom(code){
+
+    roomId = code;
+
+    roomRef =
+    db.ref("rooms/" + roomId);
+
+    roomRef.once("value")
+
+    .then(snapshot => {
+
+        if(!snapshot.exists()){
+
+            alert("ไม่พบห้อง");
+
+            return;
+        }
+
+        const playersRef =
+        db.ref(
+            "rooms/" +
+            roomId +
+            "/players"
+        );
+
+        playersRef.once("value")
+
+        .then(playersSnap => {
+
+            let total = 0;
+
+            if(playersSnap.exists()){
+
+                total =
+                Object.keys(
+                    playersSnap.val()
+                ).length;
+
+            }
+
+            if(total >= 3){
+
+                alert(
+                    "ห้องเต็ม (สูงสุด 3 คน)"
+                );
 
                 return;
             }
 
-            if(boardFull(board)){
-
-                db.ref("game").update({
-                    board:board,
-                    winner:"draw"
-                });
-
-                return;
-            }
-
-            db.ref("game").update({
-                board:board,
-                currentPlayer:
-                nextPlayer(game.currentPlayer)
-            });
+            addPlayer();
 
         });
 
     });
 
+}
+
+/* ==========================================
+   Add Player
+========================================== */
+
+function addPlayer(){
+
+    playerRef = db.ref(
+        "rooms/" +
+        roomId +
+        "/players/" +
+        playerId
+    );
+
+    playerRef.set({
+
+        id: playerId,
+
+        name: playerName,
+
+        animal: selectedAnimal,
+
+        score: 0,
+
+        time: 0,
+
+        alive: true,
+
+        ready: false,
+
+        joinedAt: Date.now()
+
+    });
+
+    playerRef.onDisconnect().remove();
+
+    enterWaitingRoom();
+
+}
+
+/* ==========================================
+   Waiting Screen
+========================================== */
+
+function enterWaitingRoom(){
+
+    lobby.classList.add("hidden");
+
+    waitingScreen.classList.remove("hidden");
+
+    roomCodeDisplay.innerHTML =
+    "ROOM : " + roomId;
+
+    const url =
+    location.origin +
+    location.pathname +
+    "?room=" +
+    roomId;
+
+    shareLink.value = url;
+
+    shareBox.classList.remove("hidden");
+
+    listenPlayers();
+
+}
+
+/* ==========================================
+   Copy Link
+========================================== */
+
+copyLinkBtn.addEventListener("click", () => {
+
+    shareLink.select();
+
+    document.execCommand("copy");
+
+    alert("คัดลอกลิงก์แล้ว");
+
 });
 
-db.ref("game")
-.on("value",(snapshot)=>{
+/* ==========================================
+   Player List
+========================================== */
 
-    const game =
-    snapshot.val();
+function listenPlayers(){
 
-    if(!game) return;
+    const playersRef =
+    db.ref(
+        "rooms/" +
+        roomId +
+        "/players"
+    );
 
-    renderBoard(game.board);
+    playersRef.on("value", snapshot => {
 
-    currentPlayerText.textContent =
-    game.currentPlayer;
+        playerList.innerHTML = "";
 
-    if(game.winner===""){
-        statusText.textContent =
-        "กำลังเล่น...";
-    }
+        if(!snapshot.exists()) return;
 
-    else if(game.winner==="draw"){
-        statusText.textContent =
-        "🤝 เสมอ";
-    }
+        const players =
+        snapshot.val();
 
-    else{
-        statusText.textContent =
-        "🏆 ผู้ชนะ " +
-        game.winner;
+        Object.values(players)
+
+        .forEach(player => {
+
+            const div =
+            document.createElement("div");
+
+            div.style.padding = "10px";
+
+            div.style.marginBottom = "8px";
+
+            div.style.borderRadius = "8px";
+
+            div.style.background =
+            player.ready
+            ? "#b7efc5"
+            : "#eeeeee";
+
+            div.innerHTML = `
+                ${player.animal}
+                ${player.name}
+                ${
+                    player.ready
+                    ? "✅ READY"
+                    : "⌛ WAIT"
+                }
+            `;
+
+            playerList.appendChild(div);
+
+        });
+
+        checkReadyStatus(players);
+
+    });
+
+}
+
+/* ==========================================
+   Ready Button
+========================================== */
+
+readyBtn.addEventListener("click", () => {
+
+    if(!playerRef) return;
+
+    playerRef.update({
+
+        ready: true
+
+    });
+
+    readyBtn.disabled = true;
+
+    readyBtn.innerHTML =
+    "✅ READY";
+
+});
+
+/* ==========================================
+   Auto Join From URL
+========================================== */
+
+window.addEventListener("load", () => {
+
+    loading.style.display = "none";
+
+    const params =
+    new URLSearchParams(
+        location.search
+    );
+
+    const room =
+    params.get("room");
+
+    if(room){
+
+        roomInput.value =
+        room.toUpperCase();
+
     }
 
 });
 
-db.ref("score")
-.on("value",(snapshot)=>{
+/* ==========================================
+   Start Game Trigger
+   (Part 2 จะทำต่อ)
+========================================== */
 
-    const score =
-    snapshot.val();
+function checkReadyStatus(players){
 
-    if(!score) return;
+    const list =
+    Object.values(players);
 
-    document.getElementById("p1win")
-    .textContent =
-    score.p1.win;
+    if(list.length < 2)
+        return;
 
-    document.getElementById("p1lose")
-    .textContent =
-    score.p1.lose;
+    const allReady =
+    list.every(
+        p => p.ready === true
+    );
 
-    document.getElementById("p2win")
-    .textContent =
-    score.p2.win;
+    if(allReady){
 
-    document.getElementById("p2lose")
-    .textContent =
-    score.p2.lose;
+        roomRef.update({
 
-    document.getElementById("p3win")
-    .textContent =
-    score.p3.win;
+            status: "countdown"
 
-    document.getElementById("p3lose")
-    .textContent =
-    score.p3.lose;
+        });
+
+    }
+
+}
+
+roomRefListener();
+
+/* ==========================================
+   Room Listener
+========================================== */
+
+function roomRefListener(){
+
+    const interval =
+    setInterval(() => {
+
+        if(!roomId) return;
+
+        clearInterval(interval);
+
+        db.ref("rooms/" + roomId)
+
+        .on("value", snapshot => {
+
+            if(!snapshot.exists())
+                return;
+
+            const room =
+            snapshot.val();
+
+            if(
+                room.status ===
+                "countdown"
+            ){
+
+                if(
+                    typeof startCountdown
+                    === "function"
+                ){
+
+                    startCountdown();
+
+                }
+
+            }
+
+        });
+
+    },500);
+
+}
+const canvas =
+document.getElementById("gameCanvas");
+
+const ctx =
+canvas.getContext("2d");
+
+canvas.width = 1200;
+canvas.height = 500;
+
+/* ==========================================
+   UI
+========================================== */
+
+const countdownEl =
+document.getElementById("countdown");
+
+const scoreEl =
+document.getElementById("score");
+
+const timeEl =
+document.getElementById("time");
+
+const mobileJump =
+document.getElementById("mobileJump");
+
+const jumpSound =
+document.getElementById("jumpSound");
+
+const gameOverSound =
+document.getElementById("gameOverSound");
+
+/* ==========================================
+   Game Variables
+========================================== */
+
+let gameStarted = false;
+let gameRunning = false;
+
+let score = 0;
+let survivalTime = 0;
+
+let scoreTimer = null;
+let timeTimer = null;
+
+const gravity = 0.9;
+
+/* ==========================================
+   Player
+========================================== */
+
+const player = {
+
+    x: 120,
+
+    y: 350,
+
+    width: 60,
+
+    height: 60,
+
+    velocityY: 0,
+
+    jumping: false
+
+};
+
+/* ==========================================
+   Obstacles
+========================================== */
+
+let obstacles = [];
+
+let obstacleSpeed = 8;
+
+let obstacleSpawnTimer = 0;
+
+/* ==========================================
+   Countdown
+========================================== */
+
+function startCountdown(){
+
+    if(gameStarted)
+        return;
+
+    gameStarted = true;
+
+    waitingScreen.classList.add("hidden");
+
+    countdownEl.style.display =
+    "block";
+
+    let count = 3;
+
+    countdownEl.innerHTML = count;
+
+    const timer =
+    setInterval(() => {
+
+        count--;
+
+        if(count > 0){
+
+            countdownEl.innerHTML =
+            count;
+
+        }
+        else if(count === 0){
+
+            countdownEl.innerHTML =
+            "GO!";
+
+        }
+        else{
+
+            clearInterval(timer);
+
+            countdownEl.style.display =
+            "none";
+
+            startGame();
+
+        }
+
+    },1000);
+
+}
+
+/* ==========================================
+   Start Game
+========================================== */
+
+function startGame(){
+
+    gameContainer.classList
+    .remove("hidden");
+
+    gameRunning = true;
+
+    score = 0;
+
+    survivalTime = 0;
+
+    obstacles = [];
+
+    player.y = 350;
+
+    player.velocityY = 0;
+
+    scoreTimer =
+    setInterval(() => {
+
+        score++;
+
+        scoreEl.innerHTML =
+        score;
+
+    },100);
+
+    timeTimer =
+    setInterval(() => {
+
+        survivalTime++;
+
+        timeEl.innerHTML =
+        survivalTime;
+
+    },1000);
+
+    gameLoop();
+
+}
+
+/* ==========================================
+   Jump
+========================================== */
+
+function jump(){
+
+    if(!gameRunning)
+        return;
+
+    if(player.jumping)
+        return;
+
+    player.jumping = true;
+
+    player.velocityY = -18;
+
+    jumpSound.currentTime = 0;
+
+    jumpSound.play();
+
+}
+
+/* ==========================================
+   Controls
+========================================== */
+
+document.addEventListener(
+"keydown",
+e => {
+
+    if(e.code === "Space"){
+
+        e.preventDefault();
+
+        jump();
+
+    }
 
 });
 
-newGameBtn.addEventListener(
-"click",
-createDefaultGame
+mobileJump.addEventListener(
+"touchstart",
+jump
 );
 
-createDefaultGame();
+mobileJump.addEventListener(
+"click",
+jump
+);
 
+/* ==========================================
+   Spawn Obstacle
+========================================== */
+
+function spawnObstacle(){
+
+    const size =
+    40 + Math.random() * 25;
+
+    obstacles.push({
+
+        x: canvas.width + 50,
+
+        y: 410,
+
+        width: size,
+
+        height: size
+
+    });
+
+}
+
+/* ==========================================
+   Draw Background
+========================================== */
+
+function drawGround(){
+
+    ctx.fillStyle =
+    "#8ecf5e";
+
+    ctx.fillRect(
+        0,
+        450,
+        canvas.width,
+        50
+    );
+
+    ctx.fillStyle =
+    "#6a994e";
+
+    for(
+        let i = 0;
+        i < canvas.width;
+        i += 40
+    ){
+
+        ctx.fillRect(
+            i,
+            450,
+            20,
+            8
+        );
+
+    }
+
+}
+
+/* ==========================================
+   Draw Player
+========================================== */
+
+function drawPlayer(){
+
+    ctx.font =
+    "50px Arial";
+
+    ctx.textAlign =
+    "center";
+
+    ctx.textBaseline =
+    "middle";
+
+    let animal =
+    selectedAnimal || "🐶";
+
+    ctx.fillText(
+
+        animal,
+
+        player.x +
+        player.width / 2,
+
+        player.y +
+        player.height / 2
+
+    );
+
+}
+
+/* ==========================================
+   Draw Obstacles
+========================================== */
+
+function drawObstacles(){
+
+    obstacles.forEach(obs => {
+
+        ctx.font =
+        "42px Arial";
+
+        ctx.fillText(
+            "🪨",
+            obs.x,
+            obs.y
+        );
+
+    });
+
+}
+
+/* ==========================================
+   Update Physics
+========================================== */
+
+function updatePlayer(){
+
+    player.velocityY +=
+    gravity;
+
+    player.y +=
+    player.velocityY;
+
+    if(player.y >= 350){
+
+        player.y = 350;
+
+        player.velocityY = 0;
+
+        player.jumping = false;
+
+    }
+
+}
+
+/* ==========================================
+   Update Obstacles
+========================================== */
+
+function updateObstacles(){
+
+    obstacleSpawnTimer++;
+
+    if(
+        obstacleSpawnTimer >
+        90
+    ){
+
+        obstacleSpawnTimer = 0;
+
+        spawnObstacle();
+
+    }
+
+    obstacles.forEach(obs => {
+
+        obs.x -=
+        obstacleSpeed;
+
+    });
+
+    obstacles =
+    obstacles.filter(
+        obs => obs.x > -100
+    );
+
+}
+
+/* ==========================================
+   Collision
+========================================== */
+
+function checkCollision(){
+
+    for(
+        let obs of obstacles
+    ){
+
+        const hit =
+
+        player.x <
+        obs.x +
+        obs.width &&
+
+        player.x +
+        player.width >
+        obs.x &&
+
+        player.y <
+        obs.y +
+        obs.height &&
+
+        player.y +
+        player.height >
+        obs.y;
+
+        if(hit){
+
+            gameOver();
+
+            return;
+
+        }
+
+    }
+
+}
+
+/* ==========================================
+   Game Over
+========================================== */
+
+function gameOver(){
+
+    gameRunning = false;
+
+    clearInterval(scoreTimer);
+
+    clearInterval(timeTimer);
+
+    gameOverSound.currentTime = 0;
+
+    gameOverSound.play();
+
+    if(playerRef){
+
+        playerRef.update({
+
+            alive: false,
+
+            score: score,
+
+            time: survivalTime
+
+        });
+
+    }
+
+    setTimeout(() => {
+
+        gameContainer.classList
+        .add("hidden");
+
+        if(
+            typeof showLeaderboard
+            === "function"
+        ){
+
+            showLeaderboard();
+
+        }
+
+    },1500);
+
+}
+
+/* ==========================================
+   Main Loop
+========================================== */
+
+function gameLoop(){
+
+    if(!gameRunning)
+        return;
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    drawGround();
+
+    updatePlayer();
+
+    updateObstacles();
+
+    drawPlayer();
+
+    drawObstacles();
+
+    checkCollision();
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+}
+
+/* ==========================================
+   Leaderboard Elements
+========================================== */
+
+const leaderboard =
+document.getElementById("leaderboard");
+
+const resultList =
+document.getElementById("resultList");
+
+const playAgainBtn =
+document.getElementById("playAgainBtn");
+
+/* ==========================================
+   Listen Players Realtime
+========================================== */
+
+function startRealtimeSync(){
+
+    if(!roomId) return;
+
+    const playersRef =
+    db.ref(
+        "rooms/" +
+        roomId +
+        "/players"
+    );
+
+    playersRef.on(
+        "value",
+        snapshot => {
+
+        if(!snapshot.exists())
+            return;
+
+        const players =
+        snapshot.val();
+
+        updateRemoteScores(players);
+
+        checkRoomFinished(players);
+
+    });
+
+}
+
+/* ==========================================
+   Update Score Realtime
+========================================== */
+
+function updateRemoteScores(players){
+
+    let boardHTML = "";
+
+    Object.values(players)
+
+    .sort((a,b)=>
+        (b.score || 0) -
+        (a.score || 0)
+    )
+
+    .forEach(player => {
+
+        boardHTML += `
+        <div class="result-player">
+
+            <b>
+                ${player.animal}
+                ${player.name}
+            </b>
+
+            <br>
+
+            Score :
+            ${player.score || 0}
+
+            <br>
+
+            Time :
+            ${player.time || 0}s
+
+            <br>
+
+            ${
+                player.alive
+                ? "🟢 Alive"
+                : "🔴 Dead"
+            }
+
+        </div>
+        `;
+
+    });
+
+    resultList.innerHTML =
+    boardHTML;
+
+}
+
+/* ==========================================
+   Check All Dead
+========================================== */
+
+function checkRoomFinished(players){
+
+    const list =
+    Object.values(players);
+
+    const alivePlayers =
+    list.filter(
+        p => p.alive === true
+    );
+
+    if(
+        alivePlayers.length === 0
+    ){
+
+        setTimeout(() => {
+
+            showLeaderboard();
+
+        },1000);
+
+    }
+
+}
+
+/* ==========================================
+   Show Leaderboard
+========================================== */
+
+function showLeaderboard(){
+
+    leaderboard.classList
+    .remove("hidden");
+
+    loadLeaderboard();
+
+}
+
+/* ==========================================
+   Load Ranking
+========================================== */
+
+function loadLeaderboard(){
+
+    const playersRef =
+    db.ref(
+        "rooms/" +
+        roomId +
+        "/players"
+    );
+
+    playersRef.once(
+        "value"
+    )
+
+    .then(snapshot => {
+
+        if(!snapshot.exists())
+            return;
+
+        const players =
+        Object.values(
+            snapshot.val()
+        );
+
+        players.sort(
+            (a,b) =>
+            (b.score || 0) -
+            (a.score || 0)
+        );
+
+        resultList.innerHTML = "";
+
+        players.forEach(
+        (player,index) => {
+
+            let medal = "🎖️";
+
+            if(index === 0)
+                medal = "🥇";
+
+            if(index === 1)
+                medal = "🥈";
+
+            if(index === 2)
+                medal = "🥉";
+
+            const div =
+            document.createElement(
+                "div"
+            );
+
+            div.className =
+            "result-player";
+
+            div.innerHTML = `
+
+                <h3>
+                    ${medal}
+                    #${index+1}
+                </h3>
+
+                <p>
+                    ${player.animal}
+                    ${player.name}
+                </p>
+
+                <p>
+                    Score :
+                    ${player.score}
+                </p>
+
+                <p>
+                    Time :
+                    ${player.time}s
+                </p>
+
+            `;
+
+            resultList
+            .appendChild(div);
+
+        });
+
+        saveHighScore(players);
+
+    });
+
+}
+
+/* ==========================================
+   Save High Score
+========================================== */
+
+function saveHighScore(players){
+
+    if(players.length === 0)
+        return;
+
+    const winner =
+    players[0];
+
+    db.ref("highscores")
+    .push({
+
+        name:
+        winner.name,
+
+        animal:
+        winner.animal,
+
+        score:
+        winner.score,
+
+        time:
+        winner.time,
+
+        createdAt:
+        Date.now()
+
+    });
+
+}
+
+/* ==========================================
+   Play Again
+========================================== */
+
+playAgainBtn.addEventListener(
+"click",
+() => {
+
+    resetCurrentPlayer();
+
+});
+
+/* ==========================================
+   Reset Current Player
+========================================== */
+
+function resetCurrentPlayer(){
+
+    if(!playerRef)
+        return;
+
+    playerRef.update({
+
+        score: 0,
+
+        time: 0,
+
+        alive: true,
+
+        ready: false
+
+    });
+
+    leaderboard.classList
+    .add("hidden");
+
+    readyBtn.disabled =
+    false;
+
+    readyBtn.innerHTML =
+    "✅ READY";
+
+    gameStarted =
+    false;
+
+    roomRef.update({
+
+        status:
+        "waiting"
+
+    });
+
+    waitingScreen.classList
+    .remove("hidden");
+
+}
+
+/* ==========================================
+   Sync Score During Game
+========================================== */
+
+setInterval(() => {
+
+    if(
+        !gameRunning ||
+        !playerRef
+    )
+        return;
+
+    playerRef.update({
+
+        score:
+        score,
+
+        time:
+        survivalTime
+
+    });
+
+},1000);
+
+/* ==========================================
+   Host Auto Start
+========================================== */
+
+function startRoomListeners(){
+
+    if(!roomId)
+        return;
+
+    roomRef =
+    db.ref(
+        "rooms/" +
+        roomId
+    );
+
+    roomRef.on(
+        "value",
+        snapshot => {
+
+        if(!snapshot.exists())
+            return;
+
+        const room =
+        snapshot.val();
+
+        if(
+            room.status ===
+            "countdown"
+        ){
+
+            if(
+                !gameStarted
+            ){
+
+                startCountdown();
+
+            }
+
+        }
+
+    });
+
+}
+
+/* ==========================================
+   Highscore Listener
+========================================== */
+
+function loadGlobalHighscores(){
+
+    db.ref("highscores")
+
+    .limitToLast(20)
+
+    .once("value")
+
+    .then(snapshot => {
+
+        if(!snapshot.exists())
+            return;
+
+        console.log(
+            "Highscores",
+            snapshot.val()
+        );
+
+    });
+
+}
+
+/* ==========================================
+   Auto Start
+========================================== */
+
+window.addEventListener(
+"load",
+() => {
+
+    startRealtimeSync();
+
+    startRoomListeners();
+
+    loadGlobalHighscores();
+
+});
+
+/* ==========================================
+   Clean Disconnect
+========================================== */
+
+window.addEventListener(
+"beforeunload",
+() => {
+
+    if(playerRef){
+
+        playerRef.remove();
+
+    }
+
+});
+
+/* ==========================================
+   Optional:
+   Remove Empty Rooms
+========================================== */
+
+function cleanupRoom(){
+
+    const playersRef =
+    db.ref(
+        "rooms/" +
+        roomId +
+        "/players"
+    );
+
+    playersRef.once(
+        "value"
+    )
+
+    .then(snapshot => {
+
+        if(
+            !snapshot.exists()
+        ){
+
+            db.ref(
+                "rooms/" +
+                roomId
+            ).remove();
+
+        }
+
+    });
+
+}
+setTimeout(() => {
+
+    if(roomId){
+
+        startRealtimeSync();
+
+        startRoomListeners();
+
+    }
+
+},2000);

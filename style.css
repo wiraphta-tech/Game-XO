@@ -1,245 +1,503 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:'Poppins',sans-serif;
+    font-family:"Segoe UI",sans-serif;
 }
 
 body{
-    min-height:100vh;
-    background:
-    radial-gradient(circle at top,#3d0000,#120000,#050505);
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:20px;
+    overflow:hidden;
+    background:linear-gradient(
+        to bottom,
+        #6ec6ff 0%,
+        #87ceeb 50%,
+        #b5e48c 100%
+    );
+    height:100vh;
+    color:#222;
 }
 
-.container{
+/* =========================
+   Background
+========================= */
+
+.mountains{
+    position:fixed;
+    bottom:0;
+    left:0;
     width:100%;
-    max-width:1200px;
+    height:45vh;
+    background:
+    linear-gradient(
+        135deg,
+        transparent 25%,
+        #6a994e 25%
+    ),
+    linear-gradient(
+        225deg,
+        transparent 25%,
+        #588157 25%
+    );
+    background-size:250px 250px;
+    opacity:.6;
+    z-index:-2;
+}
+
+.cloud{
+    position:fixed;
+    background:white;
+    border-radius:50px;
+    opacity:.9;
+    z-index:-1;
+}
+
+.cloud::before,
+.cloud::after{
+    content:"";
+    position:absolute;
+    background:white;
+    border-radius:50%;
+}
+
+.cloud1{
+    width:140px;
+    height:50px;
+    top:80px;
+    left:-200px;
+    animation:cloudMove 30s linear infinite;
+}
+
+.cloud1::before{
+    width:60px;
+    height:60px;
+    left:20px;
+    top:-25px;
+}
+
+.cloud1::after{
+    width:80px;
+    height:80px;
+    right:15px;
+    top:-35px;
+}
+
+.cloud2{
+    width:180px;
+    height:60px;
+    top:180px;
+    left:-300px;
+    animation:cloudMove 45s linear infinite;
+}
+
+.cloud2::before{
+    width:70px;
+    height:70px;
+    left:30px;
+    top:-30px;
+}
+
+.cloud2::after{
+    width:90px;
+    height:90px;
+    right:20px;
+    top:-40px;
+}
+
+@keyframes cloudMove{
+    from{
+        transform:translateX(0);
+    }
+    to{
+        transform:translateX(calc(100vw + 500px));
+    }
+}
+
+/* =========================
+   Lobby
+========================= */
+
+#lobby{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+}
+
+#lobby h1{
+    margin-bottom:25px;
+    color:#fff;
+    text-shadow:3px 3px 0 #000;
     text-align:center;
 }
 
-h1{
-    font-size:3rem;
-    margin-bottom:25px;
-    color:#ff4d4d;
-    text-shadow:
-    0 0 10px #ff0000,
-    0 0 20px #ff0000,
-    0 0 40px #ff0000;
-}
-
-.top-panel{
-    display:flex;
-    justify-content:center;
-    gap:20px;
-    flex-wrap:wrap;
-    margin-bottom:25px;
-}
-
 .card{
-    background:rgba(20,20,20,.9);
-    border:2px solid #ff2222;
+    width:95%;
+    max-width:650px;
+    background:white;
+    padding:25px;
     border-radius:20px;
-    padding:20px;
-    min-width:260px;
-
-    box-shadow:
-    0 0 15px rgba(255,0,0,.5),
-    0 0 30px rgba(255,0,0,.2);
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
 }
 
-.card h3{
-    margin-bottom:15px;
-    color:#ff6666;
-}
-
-select{
+.card input{
     width:100%;
     padding:12px;
+    margin:10px 0;
     border:none;
     border-radius:10px;
-    background:#222;
-    color:white;
-    margin-bottom:12px;
+    background:#f3f3f3;
     font-size:16px;
 }
 
+/* =========================
+   Animal Select
+========================= */
+
+.animals{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin:20px 0;
+}
+
+.animalBtn{
+    border:none;
+    cursor:pointer;
+    background:#f5f5f5;
+    border-radius:15px;
+    padding:15px;
+    min-width:110px;
+    transition:.25s;
+}
+
+.animalBtn:hover{
+    transform:translateY(-4px);
+}
+
+.animalBtn.selected{
+    background:#ffd93d;
+    border:3px solid #ff9f1c;
+}
+
+.animalBtn span{
+    display:block;
+    margin-top:5px;
+    font-size:14px;
+}
+
+.animalBtn{
+    font-size:40px;
+}
+
+/* =========================
+   Buttons
+========================= */
+
 button{
-    width:100%;
-    padding:12px;
+    cursor:pointer;
     border:none;
     border-radius:12px;
-    cursor:pointer;
-
-    background:linear-gradient(
-    45deg,
-    #ff0000,
-    #ff6b00
-    );
-
-    color:white;
+    padding:12px 18px;
     font-size:16px;
-    font-weight:bold;
-
-    transition:.3s;
+    transition:.2s;
 }
 
 button:hover{
-    transform:scale(1.05);
-
-    box-shadow:
-    0 0 15px #ff0000,
-    0 0 30px #ff6600;
+    transform:scale(1.04);
 }
 
-#currentPlayer{
-    font-size:3rem;
+#createRoomBtn{
+    background:#06d6a0;
+    color:white;
+}
+
+#joinRoomBtn{
+    background:#118ab2;
+    color:white;
+}
+
+#copyLinkBtn{
+    background:#ff9f1c;
+    color:white;
     margin-top:10px;
 }
 
-.board{
-    margin:30px auto;
-
-    display:grid;
-    grid-template-columns:
-    repeat(3,140px);
-
-    gap:12px;
-    justify-content:center;
+#readyBtn{
+    background:#06d6a0;
+    color:white;
+    margin-top:20px;
 }
 
-.cell{
-    width:140px;
-    height:140px;
+#playAgainBtn{
+    background:#ef476f;
+    color:white;
+    margin-top:20px;
+}
 
-    background:#111;
+/* =========================
+   Room Area
+========================= */
 
-    border:3px solid #ff2222;
+.roomArea{
+    margin-top:20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
 
-    border-radius:18px;
+.roomArea input{
+    flex:1;
+}
 
+#roomInfo{
+    margin-top:15px;
+    font-weight:bold;
+}
+
+#shareBox{
+    margin-top:20px;
+}
+
+#shareBox label{
+    display:block;
+    margin-bottom:8px;
+}
+
+.hidden{
+    display:none !important;
+}
+
+/* =========================
+   Waiting Room
+========================= */
+
+#waitingScreen{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+}
+
+#waitingScreen h2{
+    color:white;
+    text-shadow:2px 2px black;
+}
+
+#roomCodeDisplay{
+    font-size:24px;
+    margin:20px;
+    font-weight:bold;
+    background:white;
+    padding:12px 20px;
+    border-radius:12px;
+}
+
+#playerList{
+    width:320px;
+    min-height:180px;
+    background:white;
+    border-radius:15px;
+    padding:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,.25);
+}
+
+/* =========================
+   Countdown
+========================= */
+
+#countdown{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:120px;
+    font-weight:bold;
+    color:white;
+    text-shadow:6px 6px 0 black;
+    display:none;
+    z-index:999;
+}
+
+/* =========================
+   Game
+========================= */
+
+#gameContainer{
+    width:100%;
+    height:100vh;
+}
+
+#topBar{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    padding:15px 20px;
+    display:flex;
+    justify-content:space-between;
+    z-index:50;
+}
+
+#roomLabel{
+    background:white;
+    padding:10px 15px;
+    border-radius:10px;
+    font-weight:bold;
+}
+
+#scoreBoard{
+    background:white;
+    padding:10px 15px;
+    border-radius:10px;
+    font-weight:bold;
+    text-align:right;
+}
+
+#gameCanvas{
+    width:100%;
+    height:100vh;
+    display:block;
+}
+
+/* =========================
+   Mobile Jump
+========================= */
+
+#mobileJump{
+    position:fixed;
+    bottom:30px;
+    right:30px;
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    background:#ef476f;
+    color:white;
     display:flex;
     justify-content:center;
     align-items:center;
-
-    cursor:pointer;
-
-    font-size:4rem;
-
-    transition:.25s;
-
-    box-shadow:
-    0 0 10px rgba(255,0,0,.3);
-}
-
-.cell:hover{
-    transform:scale(1.05);
-
-    box-shadow:
-    0 0 15px #ff0000,
-    0 0 35px #ff0000;
-}
-
-.status{
-    margin-top:15px;
-    margin-bottom:25px;
-
-    font-size:1.3rem;
+    font-size:22px;
     font-weight:bold;
-
-    color:#ffd700;
-
-    text-shadow:
-    0 0 10px #ffd700;
+    box-shadow:0 5px 20px rgba(0,0,0,.3);
+    user-select:none;
 }
 
-.score-card{
-    background:rgba(20,20,20,.95);
+/* =========================
+   Leaderboard
+========================= */
 
-    border:2px solid #ff2222;
+#leaderboard{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
 
+.leaderboard-card{
+    background:white;
+    width:90%;
+    max-width:700px;
     border-radius:20px;
-
-    padding:25px;
-
-    box-shadow:
-    0 0 15px rgba(255,0,0,.4);
+    padding:30px;
+    text-align:center;
 }
 
-.score-card h2{
+.leaderboard-card h2{
     margin-bottom:20px;
-
-    color:#ff4d4d;
-
-    text-shadow:
-    0 0 10px red;
 }
 
-table{
-    width:100%;
-    border-collapse:collapse;
+#resultList{
+    text-align:left;
 }
 
-th{
-    background:#ff0000;
+.result-player{
+    padding:15px;
+    margin-bottom:10px;
+    border-radius:10px;
+    background:#f5f5f5;
+}
+
+/* =========================
+   Loading
+========================= */
+
+#loading{
+    position:fixed;
+    inset:0;
+    background:white;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.loader{
+    width:60px;
+    height:60px;
+    border:6px solid #ddd;
+    border-top:6px solid #118ab2;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    from{
+        transform:rotate(0deg);
+    }
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+/* =========================
+   Footer
+========================= */
+
+footer{
+    position:fixed;
+    bottom:10px;
+    left:50%;
+    transform:translateX(-50%);
+    text-align:center;
     color:white;
-    padding:15px;
+    text-shadow:1px 1px black;
+    font-size:12px;
 }
 
-td{
-    padding:15px;
-    border-bottom:1px solid #333;
-    font-size:18px;
-}
-
-tr:hover{
-    background:rgba(255,0,0,.1);
-}
-
-td:first-child{
-    font-size:28px;
-}
-
-#p1win,
-#p2win,
-#p3win{
-    color:#00ff88;
-    font-weight:bold;
-}
-
-#p1lose,
-#p2lose,
-#p3lose{
-    color:#ff5555;
-    font-weight:bold;
-}
+/* =========================
+   Responsive
+========================= */
 
 @media(max-width:768px){
 
-    h1{
-        font-size:2rem;
+    #lobby h1{
+        font-size:28px;
     }
 
-    .board{
-        grid-template-columns:
-        repeat(3,95px);
+    .animals{
+        flex-wrap:wrap;
     }
 
-    .cell{
-        width:95px;
-        height:95px;
-        font-size:2.7rem;
+    .animalBtn{
+        min-width:90px;
+        font-size:32px;
     }
 
-    .card{
-        width:100%;
+    #mobileJump{
+        width:100px;
+        height:100px;
+        font-size:18px;
     }
 
+    #countdown{
+        font-size:90px;
+    }
+
+    #scoreBoard{
+        font-size:14px;
+    }
 }
-

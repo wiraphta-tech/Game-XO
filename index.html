@@ -3,123 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Computer XO Online</title>
+    <title>🐶🐱🐻 Pixel Animal Run Online</title>
 
     <link rel="stylesheet" href="style.css">
 
-    <!-- Firebase -->
+    <!-- Firebase v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
-<div class="container">
+    <!-- Background -->
+    <div class="mountains"></div>
+    <div class="cloud cloud1"></div>
+    <div class="cloud cloud2"></div>
 
-    <h1>🖥️ Computer XO Online ⌨️</h1>
+    <!-- Lobby -->
+    <div id="lobby">
 
-    <div class="top-panel">
+        <h1>🐶🐱🐻 Pixel Animal Run Online</h1>
 
         <div class="card">
-            <h3>🎮 Game Mode</h3>
 
-            <select id="gameMode">
-                <option value="2">2 Players</option>
-                <option value="3">3 Players</option>
-            </select>
+            <input
+                type="text"
+                id="playerName"
+                placeholder="ชื่อผู้เล่น"
+                maxlength="20"
+            >
 
-            <button id="newGameBtn">
-                🔄 New Game
+            <h3>เลือกสัตว์</h3>
+
+            <div class="animals">
+
+                <button class="animalBtn selected" data-animal="🐶">
+                    🐶
+                    <span>Dog</span>
+                </button>
+
+                <button class="animalBtn" data-animal="🐱">
+                    🐱
+                    <span>Cat</span>
+                </button>
+
+                <button class="animalBtn" data-animal="🐻">
+                    🐻
+                    <span>Bear</span>
+                </button>
+
+            </div>
+
+            <div class="roomArea">
+
+                <button id="createRoomBtn">
+                    🎮 Create Room
+                </button>
+
+                <input
+                    type="text"
+                    id="roomInput"
+                    placeholder="ROOM CODE"
+                >
+
+                <button id="joinRoomBtn">
+                    🚪 Join Room
+                </button>
+
+            </div>
+
+            <div id="roomInfo"></div>
+
+            <div id="shareBox" class="hidden">
+
+                <label>ลิงก์แชร์ห้อง</label>
+
+                <input
+                    type="text"
+                    id="shareLink"
+                    readonly
+                >
+
+                <button id="copyLinkBtn">
+                    📋 Copy Link
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Waiting Room -->
+    <div id="waitingScreen" class="hidden">
+
+        <h2>⌛ Waiting Players...</h2>
+
+        <div id="roomCodeDisplay"></div>
+
+        <div id="playerList"></div>
+
+        <button id="readyBtn">
+            ✅ READY
+        </button>
+
+    </div>
+
+    <!-- Countdown -->
+    <div id="countdown">
+        3
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameContainer" class="hidden">
+
+        <div id="topBar">
+
+            <div id="roomLabel">
+                Room: ---
+            </div>
+
+            <div id="scoreBoard">
+
+                <div>
+                    Score:
+                    <span id="score">
+                        0
+                    </span>
+                </div>
+
+                <div>
+                    Time:
+                    <span id="time">
+                        0
+                    </span>s
+                </div>
+
+            </div>
+
+        </div>
+
+        <canvas
+            id="gameCanvas"
+            width="1200"
+            height="500">
+        </canvas>
+
+        <div id="mobileJump">
+            ⬆️ JUMP
+        </div>
+
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard" class="hidden">
+
+        <div class="leaderboard-card">
+
+            <h2>🏆 GAME RESULT</h2>
+
+            <div id="resultList"></div>
+
+            <button id="playAgainBtn">
+                🔄 Play Again
             </button>
-        </div>
 
-        <div class="card">
-            <h3>📢 Current Turn</h3>
-            <div id="currentPlayer">🖥️</div>
         </div>
 
     </div>
 
-    <!-- Board -->
-    <div id="board" class="board">
+    <!-- Audio -->
+    <audio id="jumpSound" preload="auto">
+        <source
+            src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+            type="audio/ogg">
+    </audio>
 
-        <div class="cell" data-index="0"></div>
-        <div class="cell" data-index="1"></div>
-        <div class="cell" data-index="2"></div>
+    <audio id="gameOverSound" preload="auto">
+        <source
+            src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg"
+            type="audio/ogg">
+    </audio>
 
-        <div class="cell" data-index="3"></div>
-        <div class="cell" data-index="4"></div>
-        <div class="cell" data-index="5"></div>
+    <!-- Loading -->
+    <div id="loading">
 
-        <div class="cell" data-index="6"></div>
-        <div class="cell" data-index="7"></div>
-        <div class="cell" data-index="8"></div>
+        <div class="loader"></div>
 
-    </div>
-
-    <div id="status" class="status">
-        รอผู้เล่น...
-    </div>
-
-    <!-- Scoreboard -->
-    <div class="score-card">
-
-        <h2>🏆 Scoreboard</h2>
-
-        <table>
-
-            <thead>
-                <tr>
-                    <th>Player</th>
-                    <th>Win</th>
-                    <th>Lose</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                <tr>
-                    <td>🖥️</td>
-                    <td id="p1win">0</td>
-                    <td id="p1lose">0</td>
-                </tr>
-
-                <tr>
-                    <td>⌨️</td>
-                    <td id="p2win">0</td>
-                    <td id="p2lose">0</td>
-                </tr>
-
-                <tr id="player3Row">
-                    <td>🖱️</td>
-                    <td id="p3win">0</td>
-                    <td id="p3lose">0</td>
-                </tr>
-
-            </tbody>
-
-        </table>
+        <p>Connecting Firebase...</p>
 
     </div>
 
-</div>
+    <!-- Footer -->
+    <footer>
 
-<script>
+        <p>
+            Pixel Animal Run Online
+        </p>
 
-const firebaseConfig = {
-    apiKey: "AIzaSyC82cT-xLxBhrfG7iVodbdy8EPFAwWt34w",
-    authDomain: "game-xo-30447.firebaseapp.com",
-    projectId: "game-xo-30447",
-    storageBucket: "game-xo-30447.firebasestorage.app",
-    messagingSenderId: "297249990081",
-    appId: "1:297249990081:web:2e8e97609cdb2320d67b40",
-    measurementId: "G-ZKJJQPN56P"
-};
+        <p>
+            Multiplayer 3 Players • Firebase Realtime Database
+        </p>
 
-firebase.initializeApp(firebaseConfig);
+    </footer>
 
-</script>
-
-<script src="script.js"></script>
+    <!-- Main Script -->
+    <script src="script.js"></script>
 
 </body>
 </html>
