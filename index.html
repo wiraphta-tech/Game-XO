@@ -1,121 +1,238 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Computer XO Online</title>
 
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<title>Computer XO Online</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 </head>
 <body>
 
+<!-- LOGIN PAGE -->
+
+<div id="loginPage" class="page">
+
+    <div class="card login-card">
+
+        <h1>🎮 Computer XO Online</h1>
+
+        <input
+            type="text"
+            id="playerName"
+            placeholder="กรอกชื่อผู้เล่น"
+        >
+
+        <h3>เลือกโหมด</h3>
+
+        <select id="modeSelect">
+
+            <option value="2">
+                2 Players
+            </option>
+
+            <option value="3">
+                3 Players
+            </option>
+
+        </select>
+
+        <button id="createRoomBtn">
+            ➕ สร้างห้อง
+        </button>
+
+        <hr>
+
+        <input
+            type="text"
+            id="joinRoomCode"
+            placeholder="รหัสห้อง"
+        >
+
+        <button id="joinRoomBtn">
+            🚪 เข้าห้อง
+        </button>
+
+    </div>
+
+</div>
+
+<!-- WAITING ROOM -->
+
+<div
+id="waitingPage"
+class="page"
+style="display:none;"
+>
+
+    <div class="card">
+
+        <h1>🏠 Waiting Room</h1>
+
+        <h2>
+            Room :
+            <span id="roomCodeText"></span>
+        </h2>
+
+        <h3>
+            Mode :
+            <span id="roomModeText"></span>
+        </h3>
+
+        <div id="playerList">
+
+        </div>
+
+        <p id="waitingStatus">
+
+        </p>
+
+        <button id="copyRoomBtn">
+            📋 Copy Room Code
+        </button>
+
+        <button id="backToLoginBtn">
+            ⬅️ กลับ
+        </button>
+
+    </div>
+
+</div>
+
+<!-- GAME PAGE -->
+
+<div
+id="gamePage"
+class="page"
+style="display:none;"
+>
+
 <div class="container">
 
-    <h1>🖥️ Computer XO Online ⌨️</h1>
+<h1>
+🏆 Computer XO Online
+</h1>
 
-    <div class="top-panel">
+<h2>
+Room :
+<span id="gameRoomCode"></span>
+</h2>
 
-        <div class="card">
-            <h3>🎮 Game Mode</h3>
+<div class="top-panel">
 
-            <select id="gameMode">
-                <option value="2">2 Players</option>
-                <option value="3">3 Players</option>
-            </select>
+<div class="card">
 
-            <button id="newGameBtn">
-                🔄 New Game
-            </button>
-        </div>
+<h3>
+Current Turn
+</h3>
 
-        <div class="card">
-            <h3>📢 Current Turn</h3>
-            <div id="currentPlayer">🖥️</div>
-        </div>
+<div id="currentPlayer">
 
-    </div>
+</div>
 
-    <!-- Board -->
-    <div id="board" class="board">
+</div>
 
-        <div class="cell" data-index="0"></div>
-        <div class="cell" data-index="1"></div>
-        <div class="cell" data-index="2"></div>
+</div>
 
-        <div class="cell" data-index="3"></div>
-        <div class="cell" data-index="4"></div>
-        <div class="cell" data-index="5"></div>
+<div class="board" id="board">
 
-        <div class="cell" data-index="6"></div>
-        <div class="cell" data-index="7"></div>
-        <div class="cell" data-index="8"></div>
+<div class="cell" data-index="0"></div>
+<div class="cell" data-index="1"></div>
+<div class="cell" data-index="2"></div>
 
-    </div>
+<div class="cell" data-index="3"></div>
+<div class="cell" data-index="4"></div>
+<div class="cell" data-index="5"></div>
 
-    <div id="status" class="status">
-        รอผู้เล่น...
-    </div>
+<div class="cell" data-index="6"></div>
+<div class="cell" data-index="7"></div>
+<div class="cell" data-index="8"></div>
 
-    <!-- Scoreboard -->
-    <div class="score-card">
+</div>
 
-        <h2>🏆 Scoreboard</h2>
+<div
+class="status"
+id="status"
+>
+กำลังเล่น...
+</div>
 
-        <table>
+<div class="card score-card">
 
-            <thead>
-                <tr>
-                    <th>Player</th>
-                    <th>Win</th>
-                    <th>Lose</th>
-                </tr>
-            </thead>
+<h2>
+🏆 Score Board
+</h2>
 
-            <tbody>
+<table>
 
-                <tr>
-                    <td>🖥️</td>
-                    <td id="p1win">0</td>
-                    <td id="p1lose">0</td>
-                </tr>
+<tr>
 
-                <tr>
-                    <td>⌨️</td>
-                    <td id="p2win">0</td>
-                    <td id="p2lose">0</td>
-                </tr>
+<th>
+Player
+</th>
 
-                <tr id="player3Row">
-                    <td>🖱️</td>
-                    <td id="p3win">0</td>
-                    <td id="p3lose">0</td>
-                </tr>
+<th>
+Win
+</th>
 
-            </tbody>
+<th>
+Lose
+</th>
 
-        </table>
+</tr>
 
-    </div>
+<tbody id="scoreTable">
+
+</tbody>
+
+</table>
+
+</div>
+
+<br>
+
+<button id="newGameBtn">
+🔄 New Game
+</button>
+
+<button id="resetBtn">
+🗑️ Reset Score
+</button>
+
+<button id="backRoomBtn">
+⬅️ กลับไปห้อง
+</button>
+
+<button id="logoutBtn">
+🚪 Logout
+</button>
+
+</div>
 
 </div>
 
 <script>
 
 const firebaseConfig = {
-    apiKey: "AIzaSyC82cT-xLxBhrfG7iVodbdy8EPFAwWt34w",
-    authDomain: "game-xo-30447.firebaseapp.com",
-    projectId: "game-xo-30447",
-    storageBucket: "game-xo-30447.firebasestorage.app",
-    messagingSenderId: "297249990081",
-    appId: "1:297249990081:web:2e8e97609cdb2320d67b40",
-    measurementId: "G-ZKJJQPN56P"
+  apiKey: "AIzaSyC82cT-xLxBhrfG7iVodbdy8EPFAwWt34w",
+  authDomain: "game-xo-30447.firebaseapp.com",
+  databaseURL: "https://game-xo-30447-default-rtdb.firebaseio.com",
+  projectId: "game-xo-30447",
+  storageBucket: "game-xo-30447.firebasestorage.app",
+  messagingSenderId: "297249990081",
+  appId: "1:297249990081:web:2e8e97609cdb2320d67b40",
+  measurementId: "G-ZKJJQPN56P"
 };
 
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(
+firebaseConfig
+);
 
 </script>
 
@@ -123,4 +240,3 @@ firebase.initializeApp(firebaseConfig);
 
 </body>
 </html>
-
