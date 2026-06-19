@@ -643,6 +643,10 @@ if(
 winner
 ){
 
+saveWinner(
+winner
+);
+
 db.ref(
 "rooms/" +
 roomId +
@@ -978,19 +982,6 @@ currentRoomData =
 room;
 
 updateScoreBoard();
-
-if(
-room.game &&
-room.game.winner &&
-room.game.winner !==
-"draw"
-){
-
-saveWinner(
-room.game.winner
-);
-
-}
 
 });
 const newGameBtn =
